@@ -1,8 +1,108 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma-client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CASHIER
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUST
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String
+  role           Role            @default(CASHIER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  sales          Sale[]
+  stockMovements StockMovement[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                String          @id @default(uuid())
+  barcode           String?         @unique
+  name              String
+  description       String?
+  costPrice         Decimal         @db.Decimal(10, 2)
+  sellPrice         Decimal         @db.Decimal(10, 2)
+  stockQuantity     Int             @default(0)
+  lowStockThreshold Int             @default(5)
+  imageUrl          String?
+  categoryId        String
+  category          Category        @relation(fields: [categoryId], references: [id])
+  movements         StockMovement[]
+  saleItems         SaleItem[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model StockMovement {
+  id         String       @id @default(uuid())
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id])
+  type       MovementType
+  quantity   Int
+  reason     String?
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  createdAt  DateTime     @default(now())
+}
+
+model Sale {
+  id            String        @id @default(uuid())
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  slipUrl       String?
+  cashierId     String
+  cashier       User          @relation(fields: [cashierId], references: [id])
+  items         SaleItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SaleItem {
+  id          String  @id @default(uuid())
+  saleId      String
+  sale        Sale    @relation(fields: [saleId], references: [id])
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  quantity    Int
+  priceAtSale Decimal @db.Decimal(10, 2)
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  title       String
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String // e.g., Rent, Utilities, Goods, etc.
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
