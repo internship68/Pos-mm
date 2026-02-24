@@ -4,7 +4,7 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 
 const outfit = Outfit({
-    subsets: ["latin", "thai"],
+    subsets: ["latin"],
     variable: "--font-outfit",
 });
 

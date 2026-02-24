@@ -5,6 +5,9 @@ export interface Category {
     name: string;
     description?: string;
     products?: Product[];
+    _count?: {
+        products: number;
+    };
     createdAt: string;
     updatedAt: string;
 }

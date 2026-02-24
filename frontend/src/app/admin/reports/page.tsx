@@ -1,6 +1,5 @@
 "use client";
 
-import AdminLayout from "@/components/layout/AdminLayout";
 import { useQuery } from "@tanstack/react-query";
 import { saleService } from "@/services/sale.service";
 import { useState } from "react";
@@ -15,7 +14,7 @@ export default function AdminReportsPage() {
     });
 
     return (
-        <AdminLayout>
+        <>
             <div className="mb-10">
                 <h1 className="text-2xl font-black text-slate-800 tracking-tight">รายการขายและรายงาน</h1>
                 <p className="text-sm text-slate-500 mt-1">ตรวจสอบประวัติการขายต้นทุน และยอดรวมรายรับ</p>
@@ -117,6 +116,6 @@ export default function AdminReportsPage() {
                     </div>
                 </div>
             )}
-        </AdminLayout>
+        </>
     );
 }

@@ -2,6 +2,20 @@ import { api } from "./api";
 import { Product } from "@/types/product.type";
 import { CreateProductDto } from "@/types/dtos";
 
+function sanitizeProductPayload(data: Partial<CreateProductDto>): Partial<CreateProductDto> {
+    return {
+        barcode: data.barcode,
+        name: data.name,
+        description: data.description,
+        costPrice: data.costPrice,
+        sellPrice: data.sellPrice,
+        stockQuantity: data.stockQuantity,
+        lowStockThreshold: data.lowStockThreshold,
+        imageUrl: data.imageUrl,
+        categoryId: data.categoryId,
+    };
+}
+
 export const productService = {
     findAll: async (): Promise<Product[]> => {
         const response = await api.get<Product[]>("/products");
@@ -14,12 +28,12 @@ export const productService = {
     },
 
     create: async (data: CreateProductDto): Promise<Product> => {
-        const response = await api.post<Product>("/products", data);
+        const response = await api.post<Product>("/products", sanitizeProductPayload(data) as CreateProductDto);
         return response.data;
     },
 
     update: async (id: string, data: Partial<CreateProductDto>): Promise<Product> => {
-        const response = await api.patch<Product>(`/products/${id}`, data);
+        const response = await api.patch<Product>(`/products/${id}`, sanitizeProductPayload(data));
         return response.data;
     },
 

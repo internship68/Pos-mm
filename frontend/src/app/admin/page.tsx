@@ -1,6 +1,6 @@
 "use client";
 
-import AdminLayout from "@/components/layout/AdminLayout";
+import type { SVGProps } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/services/api";
 
@@ -13,113 +13,250 @@ export default function AdminDashboard() {
         },
     });
 
+    const weeklySales = summary?.weeklySales || [];
+    const maxSales = weeklySales.length ? Math.max(...weeklySales) : 0;
+
     return (
-        <AdminLayout>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="h-full bg-[#F7F7F5] px-8 py-10 space-y-10 font-[family-name:var(--font-body)]">
+
+            {/* ===================== HEADER ===================== */}
+            <header className="flex items-end justify-between">
+                <div>
+                    <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-1">แดชบอร์ด</p>
+                    <h1 className="text-3xl font-semibold text-stone-800 tracking-tight">ภาพรวมวันนี้</h1>
+                </div>
+                <span className="text-xs text-stone-400 bg-white border border-stone-200 px-3 py-1.5 rounded-full shadow-sm">
+                    {new Date().toLocaleDateString("th-TH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </span>
+            </header>
+
+            {/* ===================== STAT CARDS ===================== */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 <StatCard
                     title="ยอดขายวันนี้"
-                    value={isLoading ? "..." : `฿${summary?.salesToday?.toLocaleString() || 0}`}
+                    value={isLoading ? "—" : `฿${summary?.salesToday?.toLocaleString() || 0}`}
                     icon={MoneyIcon}
-                    trend="+12%"
-                    color="bg-primary-500"
+                    trend={summary?.salesTrend || "0%"}
+                    accent="#6B7CFF"
+                    accentLight="#EDEEFF"
                 />
                 <StatCard
                     title="กำไรขั้นต้น"
-                    value={isLoading ? "..." : `฿${summary?.grossProfitToday?.toLocaleString() || 0}`}
+                    value={isLoading ? "—" : `฿${summary?.grossProfitToday?.toLocaleString() || 0}`}
                     icon={ProfitIcon}
-                    trend="+5%"
-                    color="bg-emerald-500"
+                    trend={summary?.profitTrend || "0%"}
+                    accent="#4DAD8D"
+                    accentLight="#E7F5F0"
                 />
                 <StatCard
                     title="สินค้าใกล้หมด"
-                    value={isLoading ? "..." : summary?.lowStockItems || 0}
+                    value={isLoading ? "—" : summary?.lowStockItems || 0}
                     icon={AlertIcon}
                     trend={summary?.lowStockItems > 0 ? "ต้องเติมด่วน" : "ปกติ"}
-                    color="bg-amber-500"
+                    accent="#E88C4A"
+                    accentLight="#FEF1E6"
                 />
                 <StatCard
-                    title="จำนวนสินค้าทั้งหมด"
-                    value={isLoading ? "..." : summary?.totalProducts || 0}
+                    title="สินค้าทั้งหมด"
+                    value={isLoading ? "—" : summary?.totalProducts || 0}
                     icon={PackageIcon}
                     trend="รายการ"
-                    color="bg-slate-800"
+                    accent="#8A8A9A"
+                    accentLight="#F0F0F4"
                 />
-            </div>
+            </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 glass rounded-3xl p-8 border-slate-200">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-slate-800">ยอดขาย 7 วันล่าสุด</h3>
-                        <div className="flex space-x-2">
-                            <span className="w-3 h-3 rounded-full bg-primary-500"></span>
-                            <span className="text-xs font-bold text-slate-400 uppercase">รายได้</span>
+            {/* ===================== CHART + TOP PRODUCTS ===================== */}
+            <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+                {/* ---------- Weekly Sales Chart ---------- */}
+                <div className="xl:col-span-2 bg-white rounded-2xl p-8 border border-stone-200/80 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <p className="text-xs tracking-widest uppercase text-stone-400">กราฟ</p>
+                            <h3 className="text-lg font-semibold text-stone-800 mt-0.5">ยอดขาย 7 วันล่าสุด</h3>
                         </div>
+                        {maxSales > 0 && (
+                            <span className="text-xs text-stone-400">
+                                สูงสุด ฿{maxSales.toLocaleString()}
+                            </span>
+                        )}
                     </div>
-                    <div className="h-64 flex items-end justify-between px-4 space-x-2">
-                        {[40, 70, 45, 90, 65, 85, 100].map((h, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center group">
-                                <div
-                                    className="w-full bg-primary-100 rounded-t-xl group-hover:bg-primary-500 transition-all duration-500 relative"
-                                    style={{ height: `${h}%` }}
-                                >
-                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                        ฿{(h * 1000).toLocaleString()}
+
+                    <div className="h-56 flex items-end gap-3">
+                        {weeklySales.length > 0 ? (
+                            weeklySales.map((sales: number, i: number) => {
+                                const pct = maxSales ? (sales / maxSales) * 100 : 0;
+                                return (
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                        <div className="relative w-full flex items-end" style={{ height: "100%" }}>
+                                            {/* Background track */}
+                                            <div className="absolute bottom-0 w-full h-full bg-stone-100 rounded-xl" />
+                                            {/* Fill bar */}
+                                            <div
+                                                className="relative w-full rounded-xl transition-all duration-500"
+                                                style={{
+                                                    height: `${pct}%`,
+                                                    background: "linear-gradient(180deg, #6B7CFF 0%, #8B97FF 100%)",
+                                                    opacity: 0.85,
+                                                }}
+                                            >
+                                                {/* Tooltip */}
+                                                <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-stone-800 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
+                                                    ฿{sales.toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] text-stone-400 font-medium">
+                                            {["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"][i] || `D${i + 1}`}
+                                        </span>
                                     </div>
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-400 mt-3 uppercase">Day {i + 1}</span>
+                                );
+                            })
+                        ) : (
+                            <div className="w-full flex flex-col items-center justify-center gap-2 text-stone-300">
+                                <BarChartEmptyIcon className="w-12 h-12" />
+                                <span className="text-sm">ไม่มีข้อมูลยอดขาย</span>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
-                <div className="glass rounded-3xl p-8 border-slate-200">
-                    <h3 className="text-xl font-bold text-slate-800 mb-6">สินค้าขายดี</h3>
-                    <div className="space-y-6">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex-shrink-0"></div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-slate-800 text-sm">สินค้าตัวอย่าง {i}</p>
-                                    <p className="text-primary-600 text-xs font-bold">฿1,200 <span className="text-slate-400 font-medium">x 45</span></p>
+                {/* ---------- Top Products ---------- */}
+                <div className="bg-white rounded-2xl p-8 border border-stone-200/80 shadow-sm">
+                    <div className="mb-6">
+                        <p className="text-xs tracking-widest uppercase text-stone-400">อันดับ</p>
+                        <h3 className="text-lg font-semibold text-stone-800 mt-0.5">สินค้าขายดี</h3>
+                    </div>
+
+                    <div className="space-y-1">
+                        {summary?.topProducts?.length > 0 ? (
+                            summary.topProducts.map((product: any, i: number) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center justify-between py-3.5 border-b border-stone-100 last:border-0 group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span
+                                            className="text-xs font-bold w-5 text-center"
+                                            style={{ color: i === 0 ? "#6B7CFF" : i === 1 ? "#4DAD8D" : "#C0BFBE" }}
+                                        >
+                                            {i + 1}
+                                        </span>
+                                        <div>
+                                            <p className="font-medium text-stone-800 text-sm leading-tight">
+                                                {product.name}
+                                            </p>
+                                            <p className="text-xs text-stone-400 mt-0.5">
+                                                ฿{product.price?.toLocaleString()} × {product.quantity}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-semibold text-stone-700">
+                                        ฿{(product.price * product.quantity)?.toLocaleString()}
+                                    </span>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-black text-slate-300">#0{i}</p>
-                                </div>
+                            ))
+                        ) : (
+                            <div className="py-10 text-center text-stone-300 text-sm">
+                                ยังไม่มีข้อมูล
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
-            </div>
-        </AdminLayout>
-    );
-}
-
-function StatCard({ title, value, icon: Icon, trend, color }: any) {
-    return (
-        <div className="glass p-6 rounded-3xl border-slate-200 hover:shadow-xl transition-all duration-300 group">
-            <div className="flex justify-between items-start mb-4">
-                <div className={`${color} p-3 rounded-2xl text-white shadow-lg`}>
-                    <Icon className="w-6 h-6" />
-                </div>
-                <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${trend.includes('+') ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
-                    {trend}
-                </span>
-            </div>
-            <p className="text-slate-500 font-medium text-sm">{title}</p>
-            <h4 className="text-2xl font-black text-slate-900 mt-1">{value}</h4>
+            </section>
         </div>
     );
 }
 
-function MoneyIcon(props: any) {
-    return <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 16V15" /></svg>;
+/* ===================== STAT CARD ===================== */
+
+function StatCard({ title, value, icon: Icon, trend, accent, accentLight }: any) {
+    const isAlert = trend?.includes("ต้องเติม");
+    const isPositive = trend?.includes("+");
+
+    return (
+        <div className="bg-white border border-stone-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 group">
+            <div className="flex items-start justify-between mb-5">
+                <div
+                    className="p-2.5 rounded-xl transition-transform duration-200 group-hover:scale-105"
+                    style={{ background: accentLight }}
+                >
+                    <Icon className="w-5 h-5" style={{ color: accent }} />
+                </div>
+                <span
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full tracking-wide ${
+                        isAlert
+                            ? "bg-orange-50 text-orange-500"
+                            : isPositive
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-stone-100 text-stone-400"
+                    }`}
+                >
+                    {trend}
+                </span>
+            </div>
+
+            <p className="text-xs text-stone-400 tracking-wide uppercase">{title}</p>
+            <h4 className="text-2xl font-semibold text-stone-800 mt-1.5 tabular-nums">{value}</h4>
+
+            {/* Bottom accent line */}
+            <div
+                className="mt-5 h-0.5 w-8 rounded-full opacity-40 group-hover:w-16 group-hover:opacity-70 transition-all duration-300"
+                style={{ background: accent }}
+            />
+        </div>
+    );
 }
-function ProfitIcon(props: any) {
-    return <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
+
+/* ===================== ICONS ===================== */
+
+function MoneyIcon(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v12" />
+            <path d="M15 9H10.5a2 2 0 0 0 0 4H13.5a2 2 0 0 1 0 4H9" />
+        </svg>
+    );
 }
-function AlertIcon(props: any) {
-    return <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
+
+function ProfitIcon(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <polyline points="3 17 9 11 13 15 20 8" />
+            <polyline points="14 8 20 8 20 14" />
+        </svg>
+    );
 }
-function PackageIcon(props: any) {
-    return <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+
+function AlertIcon(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M10.3 3.6 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+    );
+}
+
+function PackageIcon(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+        </svg>
+    );
+}
+
+function BarChartEmptyIcon(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" {...props}>
+            <rect x="2" y="14" width="4" height="7" rx="1" />
+            <rect x="10" y="9" width="4" height="12" rx="1" />
+            <rect x="18" y="4" width="4" height="17" rx="1" />
+            <line x1="2" y1="22" x2="22" y2="22" />
+        </svg>
+    );
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import AdminLayout from "@/components/layout/AdminLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/services/api";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Product } from "@/types/product.type";
 
 export default function AdminInventoryPage() {
@@ -40,154 +39,370 @@ export default function AdminInventoryPage() {
         },
         onError: (err: any) => {
             alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
-        }
+        },
     });
 
+    const lowStockProducts = products?.filter((p) => p.stockQuantity <= p.lowStockThreshold) ?? [];
+
     return (
-        <AdminLayout>
-            <div className="flex justify-between items-center mb-8">
+        <div className="min-h-screen bg-[#F7F7F5] px-8 py-10">
+
+            {/* ===================== HEADER ===================== */}
+            <div className="flex justify-between items-end mb-10">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800">จัดการสต็อกสินค้า</h1>
-                    <p className="text-sm text-slate-500 mt-1">ติดตามการเคลื่อนไหวของสินค้าเข้า-ออก และปรับปรุงยอดสินค้าคงเหลือ</p>
+                    <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-1">คลังสินค้า</p>
+                    <h1 className="text-3xl font-semibold text-stone-800 tracking-tight">จัดการสต็อก</h1>
+                    <p className="text-sm text-stone-400 mt-1.5">
+                        ติดตามการเคลื่อนไหวสินค้าเข้า-ออก และปรับปรุงยอดสินค้าคงเหลือ
+                    </p>
                 </div>
+
                 <button
-                    onClick={() => setIsAdjustModalOpen(true)}
-                    className="bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-slate-200 hover:scale-[1.05] transition-all flex items-center"
+                    onClick={() => { setSelectedProduct(null); setIsAdjustModalOpen(true); }}
+                    className="flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
                 >
-                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    ปรับปรุงสต็อก (Manual)
+                    ปรับปรุงสต็อก
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Movement Logs */}
-                <div className="lg:col-span-2 glass rounded-3xl overflow-hidden border-slate-200 shadow-xl">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm text-primary-600">ประวัติการเคลื่อนไหวสต็อก</h3>
+            {/* ===================== CONTENT ===================== */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {/* ---------- Movement Log Table ---------- */}
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-0.5">บันทึก</p>
+                            <h3 className="text-sm font-semibold text-stone-800">ประวัติการเคลื่อนไหวสต็อก</h3>
+                        </div>
+                        {movements?.length > 0 && (
+                            <span className="text-xs text-stone-400">
+                                {movements.length} รายการ
+                            </span>
+                        )}
                     </div>
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead>
-                                <tr className="border-b border-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    <th className="px-6 py-4">วัน-เวลา</th>
-                                    <th className="px-6 py-4">สินค้า</th>
-                                    <th className="px-6 py-4">ประเภท</th>
-                                    <th className="px-6 py-4 text-right">จำนวน</th>
-                                    <th className="px-6 py-4">เหตุผล</th>
-                                    <th className="px-6 py-4">ผู้ทำรายการ</th>
+                            <thead className="bg-stone-50/60 border-b border-stone-100">
+                                <tr>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">วัน-เวลา</th>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">สินค้า</th>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">ประเภท</th>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest text-right">จำนวน</th>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">เหตุผล</th>
+                                    <th className="px-6 py-3.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">ผู้ทำรายการ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 text-sm">
+                            <tbody className="divide-y divide-stone-100 text-sm">
                                 {movementsLoading ? (
-                                    <tr><td colSpan={6} className="text-center py-10 animate-pulse uppercase tracking-widest text-slate-300 font-bold">กำลังโหลด...</td></tr>
-                                ) : movements?.map((m: any) => (
-                                    <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-mono text-xs text-slate-400">
-                                            {new Date(m.createdAt).toLocaleString('th-TH', {
-                                                day: '2-digit', month: '2-digit', year: '2-digit',
-                                                hour: '2-digit', minute: '2-digit'
-                                            })}
+                                    Array.from({ length: 6 }).map((_, i) => (
+                                        <tr key={i}>
+                                            {Array.from({ length: 6 }).map((_, j) => (
+                                                <td key={j} className="px-6 py-4">
+                                                    <div className="h-3 bg-stone-100 rounded animate-pulse" style={{ width: j === 1 ? "8rem" : "4rem" }} />
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : movements?.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-20">
+                                            <div className="flex flex-col items-center gap-3 text-stone-300">
+                                                <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth={1.25} viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                </svg>
+                                                <span className="text-sm">ยังไม่มีประวัติการเคลื่อนไหว</span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 font-bold text-slate-700">{m.product?.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${m.type === 'IN' ? 'bg-emerald-50 text-emerald-600' :
-                                                    m.type === 'OUT' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'
-                                                }`}>
-                                                {m.type}
-                                            </span>
-                                        </td>
-                                        <td className={`px-6 py-4 text-right font-black ${m.type === 'IN' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                                            {m.type === 'IN' ? '+' : '-'}{m.quantity}
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500 text-xs italic">{m.reason || "-"}</td>
-                                        <td className="px-6 py-4 text-slate-600 font-medium">{m.user?.name}</td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    movements?.map((m: any) => (
+                                        <tr key={m.id} className="hover:bg-stone-50/60 transition-colors duration-100">
+                                            <td className="px-6 py-4 font-mono text-[11px] text-stone-400 whitespace-nowrap">
+                                                {new Date(m.createdAt).toLocaleString("th-TH", {
+                                                    day: "2-digit", month: "2-digit", year: "2-digit",
+                                                    hour: "2-digit", minute: "2-digit",
+                                                })}
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-stone-800 text-sm">
+                                                {m.product?.name}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                                    m.type === "IN"
+                                                        ? "bg-emerald-50 text-emerald-600"
+                                                        : m.type === "OUT"
+                                                        ? "bg-orange-50 text-orange-500"
+                                                        : "bg-stone-100 text-stone-500"
+                                                }`}>
+                                                    {m.type === "IN" ? "▲" : m.type === "OUT" ? "▼" : "~"} {m.type}
+                                                </span>
+                                            </td>
+                                            <td className={`px-6 py-4 text-right font-semibold tabular-nums ${
+                                                m.type === "IN" ? "text-emerald-600" : "text-stone-700"
+                                            }`}>
+                                                {m.type === "IN" ? "+" : m.type === "OUT" ? "−" : ""}{m.quantity}
+                                            </td>
+                                            <td className="px-6 py-4 text-stone-400 text-xs italic max-w-[140px] truncate">
+                                                {m.reason || "—"}
+                                            </td>
+                                            <td className="px-6 py-4 text-stone-500 text-sm">
+                                                {m.user?.name || "—"}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                {/* Quick Info Card */}
-                <div className="space-y-6">
-                    <div className="glass rounded-3xl p-8 border-slate-200">
-                        <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm mb-6 flex items-center">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
-                            แจ้งเตือนสินค้าใกล้หมด
-                        </h3>
-                        <div className="space-y-4">
-                            {products?.filter(p => p.stockQuantity <= p.lowStockThreshold).map(p => (
-                                <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 border border-amber-100">
-                                    <div className="min-w-0">
-                                        <p className="font-bold text-slate-800 text-sm truncate">{p.name}</p>
-                                        <p className="text-xs text-amber-600">คงเหลือเพียง {p.stockQuantity}</p>
-                                    </div>
-                                    <button
-                                        onClick={() => { setSelectedProduct(p); setIsAdjustModalOpen(true); }}
-                                        className="bg-white p-2 rounded-xl text-amber-600 shadow-sm hover:scale-105 transition-all"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                                    </button>
-                                </div>
-                            ))}
+                {/* ---------- Low Stock Alert Panel ---------- */}
+                <div className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-stone-100">
+                        <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                            <div>
+                                <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-0.5">แจ้งเตือน</p>
+                                <h3 className="text-sm font-semibold text-stone-800">สินค้าใกล้หมด</h3>
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="p-4">
+                        {lowStockProducts.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 gap-3 text-stone-300">
+                                <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth={1.25} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="text-sm">สต็อกทุกรายการปกติ</span>
+                            </div>
+                        ) : (
+                            <div className="space-y-2.5">
+                                {lowStockProducts.map((p) => (
+                                    <div
+                                        key={p.id}
+                                        className="flex items-center justify-between p-3.5 rounded-xl bg-orange-50 border border-orange-100 group"
+                                    >
+                                        <div className="min-w-0 mr-3">
+                                            <p className="font-medium text-stone-800 text-sm truncate leading-tight">
+                                                {p.name}
+                                            </p>
+                                            <p className="text-xs text-orange-500 mt-0.5">
+                                                คงเหลือเพียง <span className="font-semibold">{p.stockQuantity}</span> ชิ้น
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setSelectedProduct(p); setIsAdjustModalOpen(true); }}
+                                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white rounded-lg text-orange-500 border border-orange-100 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all duration-150 shadow-sm"
+                                            title="เติมสต็อก"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
+            {/* ===================== MODAL ===================== */}
             {isAdjustModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="glass max-w-sm w-full rounded-3xl p-8 shadow-2xl border-white animate-in slide-in-from-bottom-5 duration-300">
-                        <h3 className="text-2xl font-black text-slate-800 mb-6 tracking-tight">ปรับปรุงสต็อกสินค้า</h3>
-                        <form onSubmit={(e: any) => {
-                            e.preventDefault();
-                            const data = {
-                                productId: e.target.productId.value,
-                                type: e.target.type.value,
-                                quantity: parseInt(e.target.quantity.value),
-                                reason: e.target.reason.value
-                            };
-                            adjustStockMutation.mutate(data);
-                        }} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">เลือกสินค้า</label>
-                                <select name="productId" defaultValue={selectedProduct?.id} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white">
-                                    <option value="">เลือกสินค้า...</option>
-                                    {products?.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name} (คงเหลือ: {p.stockQuantity})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">ประเภทการเปลี่ยน</label>
-                                    <select name="type" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white">
-                                        <option value="IN">รับสินค้าเข้า (+)</option>
-                                        <option value="OUT">เอาสินค้าออก (-)</option>
-                                        <option value="ADJUST">ปรับปรุงยอด (ADJUST)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">จำนวน</label>
-                                    <input type="number" name="quantity" required min="1" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">เหตุผล / หมายเหตุ</label>
-                                <textarea name="reason" placeholder="เช่น เติมสต็อก, สินค้าเสีย, ฯลฯ" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none h-20" />
-                            </div>
-                            <div className="flex justify-between items-center pt-6 space-x-4">
-                                <button type="button" onClick={() => setIsAdjustModalOpen(false)} className="font-bold text-slate-400 uppercase text-xs">ยกเลิก</button>
-                                <button type="submit" disabled={adjustStockMutation.isPending} className="flex-1 gradient-primary text-white py-4 rounded-2xl font-black shadow-lg shadow-primary-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
-                                    {adjustStockMutation.isPending ? "กำลังบันทึก..." : "ยืนยันการปรับสต็อก"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <AdjustModal
+                    products={products ?? []}
+                    selectedProduct={selectedProduct}
+                    isPending={adjustStockMutation.isPending}
+                    onClose={() => { setIsAdjustModalOpen(false); setSelectedProduct(null); }}
+                    onSubmit={(data) => adjustStockMutation.mutate(data)}
+                />
             )}
-        </AdminLayout>
+        </div>
+    );
+}
+
+/* ============================================================
+   ADJUST MODAL
+   ============================================================ */
+function AdjustModal({
+    products,
+    selectedProduct,
+    isPending,
+    onClose,
+    onSubmit,
+}: {
+    products: Product[];
+    selectedProduct: Product | null;
+    isPending: boolean;
+    onClose: () => void;
+    onSubmit: (data: { productId: string; type: string; quantity: number; reason: string }) => void;
+}) {
+    const backdropRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [onClose]);
+
+    return (
+        <div
+            ref={backdropRef}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(20,18,16,0.5)", backdropFilter: "blur(6px)" }}
+            onClick={(e) => e.target === backdropRef.current && onClose()}
+        >
+            <div
+                className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                style={{ animation: "modalIn 0.2s cubic-bezier(0.16,1,0.3,1)" }}
+            >
+                {/* Top accent */}
+                <div className="h-px w-full bg-gradient-to-r from-[#6B7CFF] via-[#9BA7FF] to-transparent" />
+
+                {/* Header */}
+                <div className="flex items-start justify-between px-7 pt-6 pb-5 border-b border-stone-100">
+                    <div>
+                        <p className="text-[10px] tracking-[0.25em] uppercase text-stone-400 mb-1 font-medium">สต็อก</p>
+                        <h2 className="text-lg font-semibold text-stone-800 tracking-tight">ปรับปรุงสต็อกสินค้า</h2>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="mt-0.5 p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Form */}
+                <form
+                    onSubmit={(e: any) => {
+                        e.preventDefault();
+                        onSubmit({
+                            productId: e.target.productId.value,
+                            type: e.target.type.value,
+                            quantity: parseInt(e.target.quantity.value),
+                            reason: e.target.reason.value,
+                        });
+                    }}
+                    className="px-7 py-6 space-y-5"
+                >
+                    {/* เลือกสินค้า */}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-stone-500 tracking-wide">
+                            เลือกสินค้า<span className="text-[#6B7CFF] ml-0.5">*</span>
+                        </label>
+                        <div className="relative">
+                            <select
+                                name="productId"
+                                defaultValue={selectedProduct?.id ?? ""}
+                                required
+                                className="w-full appearance-none rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-[#6B7CFF]/25 focus:border-[#6B7CFF] transition cursor-pointer pr-10"
+                            >
+                                <option value="" disabled>เลือกสินค้า...</option>
+                                {products.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name} (คงเหลือ: {p.stockQuantity})
+                                    </option>
+                                ))}
+                            </select>
+                            <svg className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* ประเภท + จำนวน */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-stone-500 tracking-wide">ประเภท<span className="text-[#6B7CFF] ml-0.5">*</span></label>
+                            <div className="relative">
+                                <select
+                                    name="type"
+                                    className="w-full appearance-none rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-[#6B7CFF]/25 focus:border-[#6B7CFF] transition cursor-pointer pr-8"
+                                >
+                                    <option value="IN">รับเข้า (+)</option>
+                                    <option value="OUT">เอาออก (−)</option>
+                                    <option value="ADJUST">ปรับยอด</option>
+                                </select>
+                                <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-stone-500 tracking-wide">จำนวน<span className="text-[#6B7CFF] ml-0.5">*</span></label>
+                            <input
+                                type="number"
+                                name="quantity"
+                                required
+                                min="1"
+                                placeholder="0"
+                                className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-[#6B7CFF]/25 focus:border-[#6B7CFF] transition"
+                            />
+                        </div>
+                    </div>
+
+                    {/* เหตุผล */}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-stone-500 tracking-wide">เหตุผล / หมายเหตุ</label>
+                        <textarea
+                            name="reason"
+                            rows={3}
+                            placeholder="เช่น เติมสต็อก, สินค้าเสีย, นับสต็อกใหม่..."
+                            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-[#6B7CFF]/25 focus:border-[#6B7CFF] transition resize-none"
+                        />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-3 pt-1">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-5 py-2.5 text-sm font-medium text-stone-500 hover:bg-stone-100 rounded-xl transition-colors"
+                        >
+                            ยกเลิก
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-stone-800 hover:bg-stone-700 disabled:bg-stone-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+                        >
+                            {isPending ? (
+                                <>
+                                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24">
+                                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                    </svg>
+                                    กำลังบันทึก...
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    ยืนยันการปรับสต็อก
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <style>{`
+                @keyframes modalIn {
+                    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+            `}</style>
+        </div>
     );
 }

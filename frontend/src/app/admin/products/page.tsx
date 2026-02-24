@@ -1,13 +1,59 @@
 "use client";
 
-import AdminLayout from "@/components/layout/AdminLayout";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { productService } from "@/services/product.service";
 import { categoryService } from "@/services/category.service";
+import { productService } from "@/services/product.service";
 import { useState } from "react";
+import { Modal } from "@/components/ui/Modal";
+import ProductForm from "@/components/forms/ProductForm";
 import { Product } from "@/types/product.type";
+import type { Category } from "@/types/category.type";
 import { CreateProductDto } from "@/types/dtos";
-import { useForm } from "react-hook-form";
+
+function ProductModal({
+    categories,
+    product,
+    onClose,
+    onSubmit,
+    isPending,
+}: {
+    categories: Category[];
+    product: Product | null;
+    onClose: () => void;
+    onSubmit: (data: CreateProductDto) => void;
+    isPending: boolean;
+}) {
+    return (
+        <Modal
+            open
+            title={product ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
+            onClose={onClose}
+            className="max-w-2xl"
+        >
+            <ProductForm
+                categories={categories}
+                defaultValues={
+                    product
+                        ? {
+                              barcode: product.barcode,
+                              name: product.name,
+                              description: product.description,
+                              costPrice: product.costPrice,
+                              sellPrice: product.sellPrice,
+                              stockQuantity: product.stockQuantity,
+                              categoryId: product.categoryId,
+                              imageUrl: product.imageUrl,
+                              lowStockThreshold: product.lowStockThreshold,
+                          }
+                        : undefined
+                }
+                onSubmit={onSubmit}
+                submitting={isPending}
+            />
+        </Modal>
+    );
+}
 
 export default function AdminProductsPage() {
     const queryClient = useQueryClient();
@@ -28,6 +74,7 @@ export default function AdminProductsPage() {
         mutationFn: productService.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
             setIsModalOpen(false);
         },
     });
@@ -37,6 +84,7 @@ export default function AdminProductsPage() {
             productService.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
             setIsModalOpen(false);
             setEditingProduct(null);
         },
@@ -46,6 +94,7 @@ export default function AdminProductsPage() {
         mutationFn: productService.remove,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+            queryClient.invalidateQueries({ queryKey: ["categories"] });
         },
     });
 
@@ -66,82 +115,210 @@ export default function AdminProductsPage() {
     };
 
     return (
-        <AdminLayout>
-            <div className="flex justify-between items-center mb-8">
+        <div className="min-h-screen bg-[#F7F7F5] px-8 py-10">
+
+            {/* ===================== HEADER ===================== */}
+            <div className="flex justify-between items-end mb-10">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800">จัดการสินค้า</h1>
-                    <p className="text-sm text-slate-500 mt-1">เพิ่ม แก้ไข หรือลบรายการสินค้าในระบบ</p>
+                    <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-1">คลังสินค้า</p>
+                    <h1 className="text-3xl font-semibold text-stone-800 tracking-tight">
+                        จัดการสินค้า
+                    </h1>
+                    <p className="text-sm text-stone-400 mt-1.5">
+                        เพิ่ม แก้ไข หรือลบรายการสินค้าในระบบ
+                    </p>
                 </div>
-                <button
-                    onClick={openCreateModal}
-                    className="gradient-primary text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary-200 hover:scale-[1.05] transition-all flex items-center"
-                >
-                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    เพิ่มสินค้าใหม่
-                </button>
+
+                <div className="flex items-center gap-3">
+                    {(!categories || categories.length === 0) && (
+                        <Link
+                            href="/admin/categories"
+                            className="px-5 py-2.5 bg-white border border-amber-300 text-amber-600 rounded-xl text-sm font-medium hover:bg-amber-50 transition-colors shadow-sm"
+                        >
+                            + เพิ่มหมวดหมู่ก่อน
+                        </Link>
+                    )}
+
+                    <button
+                        onClick={openCreateModal}
+                        className="flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
+                    >
+                        <span className="text-lg leading-none">+</span>
+                        เพิ่มสินค้าใหม่
+                    </button>
+                </div>
             </div>
 
-            <div className="glass rounded-3xl overflow-hidden border-slate-200 shadow-xl">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-50/50 border-b border-slate-100">
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">สินค้า</th>
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">หมวดหมู่</th>
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">ราคาทุน</th>
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">ราคาขาย</th>
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">สต็อก</th>
-                            <th className="px-6 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">จัดการ</th>
+            {/* ===================== TABLE ===================== */}
+            <div className="bg-white rounded-2xl border border-stone-200/80 shadow-sm overflow-hidden">
+
+                {/* Summary bar */}
+                {!isLoading && products && (
+                    <div className="px-6 py-3.5 border-b border-stone-100 flex items-center justify-between">
+                        <span className="text-xs text-stone-400">
+                            ทั้งหมด{" "}
+                            <span className="font-semibold text-stone-600">{products.length}</span>{" "}
+                            รายการ
+                        </span>
+                        <span className="text-xs text-stone-400">
+                            สินค้าใกล้หมด{" "}
+                            <span className="font-semibold text-orange-500">
+                                {products.filter(p => p.stockQuantity <= p.lowStockThreshold).length}
+                            </span>{" "}
+                            รายการ
+                        </span>
+                    </div>
+                )}
+
+                <table className="w-full text-left">
+                    <thead className="bg-stone-50/60 border-b border-stone-100">
+                        <tr>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">สินค้า</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">หมวดหมู่</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest text-right">ราคาทุน</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest text-right">ราคาขาย</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest text-center">คงเหลือ</th>
+                            <th className="px-6 py-4 text-[11px] font-semibold text-stone-400 uppercase tracking-widest text-right">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+
+                    <tbody className="divide-y divide-stone-100">
                         {isLoading ? (
-                            <tr><td colSpan={6} className="text-center py-20 text-slate-400 font-bold uppercase tracking-widest animate-pulse">กำลังโหลดข้อมูล...</td></tr>
-                        ) : products?.map((product) => (
-                            <tr key={product.id} className="hover:bg-slate-50/30 transition-colors group">
-                                <td className="px-6 py-5">
-                                    <div className="flex items-center">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100 mr-4 flex-shrink-0 overflow-hidden border border-slate-200">
-                                            {product.imageUrl && <img src={product.imageUrl} className="w-full h-full object-cover" />}
+                            /* Loading skeleton */
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <tr key={i}>
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-11 h-11 rounded-xl bg-stone-100 animate-pulse" />
+                                            <div className="space-y-2">
+                                                <div className="w-32 h-3 bg-stone-100 rounded animate-pulse" />
+                                                <div className="w-20 h-2.5 bg-stone-100 rounded animate-pulse" />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-slate-800">{product.name}</p>
-                                            <p className="text-xs text-slate-400 font-mono mt-0.5">{product.barcode || "ไม่มีบาร์โค้ด"}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-5">
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
-                                        {product.category?.name || "ทั่วไป"}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5 text-right font-medium text-slate-500">฿{Number(product.costPrice).toLocaleString()}</td>
-                                <td className="px-6 py-5 text-right font-black text-primary-600">฿{Number(product.sellPrice).toLocaleString()}</td>
-                                <td className="px-6 py-5 text-center">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${product.stockQuantity <= product.lowStockThreshold
-                                            ? "bg-red-50 text-red-600 animate-pulse"
-                                            : "bg-emerald-50 text-emerald-600"
-                                        }`}>
-                                        {product.stockQuantity} {product.stockQuantity <= product.lowStockThreshold ? "Low Stock" : "In Stock"}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-5 text-right">
-                                    <div className="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEditModal(product)} className="p-2 text-primary-500 hover:bg-primary-50 rounded-lg transition-colors">
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                        </button>
-                                        <button onClick={() => handleDelete(product.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                    </td>
+                                    {Array.from({ length: 4 }).map((_, j) => (
+                                        <td key={j} className="px-6 py-5">
+                                            <div className="w-16 h-3 bg-stone-100 rounded animate-pulse mx-auto" />
+                                        </td>
+                                    ))}
+                                    <td className="px-6 py-5">
+                                        <div className="w-20 h-3 bg-stone-100 rounded animate-pulse ml-auto" />
+                                    </td>
+                                </tr>
+                            ))
+                        ) : products?.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="text-center py-20">
+                                    <div className="flex flex-col items-center gap-3 text-stone-300">
+                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" strokeWidth={1.25} viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z" />
+                                            <polyline strokeLinecap="round" strokeLinejoin="round" points="3.27 6.96 12 12.01 20.73 6.96" />
+                                            <line strokeLinecap="round" x1="12" y1="22.08" x2="12" y2="12" />
+                                        </svg>
+                                        <span className="text-sm">ยังไม่มีสินค้าในระบบ</span>
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            products?.map((product) => {
+                                const isLow = product.stockQuantity <= product.lowStockThreshold;
+                                const margin = product.sellPrice > 0
+                                    ? Math.round(((product.sellPrice - product.costPrice) / product.sellPrice) * 100)
+                                    : 0;
+
+                                return (
+                                    <tr
+                                        key={product.id}
+                                        className="hover:bg-stone-50/70 transition-colors duration-150 group"
+                                    >
+                                        {/* Product */}
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex-shrink-0">
+                                                    {product.imageUrl ? (
+                                                        <img
+                                                            src={product.imageUrl}
+                                                            className="w-full h-full object-cover"
+                                                            alt={product.name}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-stone-300 text-lg">
+                                                            📦
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-stone-800 text-sm leading-tight">
+                                                        {product.name}
+                                                    </p>
+                                                    <p className="text-[11px] text-stone-400 font-mono mt-0.5">
+                                                        {product.barcode || "—"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Category */}
+                                        <td className="px-6 py-4">
+                                            <span className="inline-block px-2.5 py-1 bg-stone-100 text-stone-600 rounded-lg text-[11px] font-medium">
+                                                {product.category?.name || "ทั่วไป"}
+                                            </span>
+                                        </td>
+
+                                        {/* Cost */}
+                                        <td className="px-6 py-4 text-right text-sm text-stone-400 tabular-nums">
+                                            ฿{Number(product.costPrice).toLocaleString()}
+                                        </td>
+
+                                        {/* Sell price + margin */}
+                                        <td className="px-6 py-4 text-right">
+                                            <p className="text-sm font-semibold text-stone-800 tabular-nums">
+                                                ฿{Number(product.sellPrice).toLocaleString()}
+                                            </p>
+                                            <p className="text-[11px] text-stone-400 mt-0.5">
+                                                กำไร {margin}%
+                                            </p>
+                                        </td>
+
+                                        {/* Stock */}
+                                        <td className="px-6 py-4 text-center">
+                                            <span className="font-semibold text-stone-800 text-sm tabular-nums">
+                                                {product.stockQuantity}
+                                            </span>
+                                            <div className="mt-1.5">
+                                                <span
+                                                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                                        isLow
+                                                            ? "bg-orange-100 text-orange-600"
+                                                            : "bg-emerald-50 text-emerald-600"
+                                                    }`}
+                                                >
+                                                    {isLow ? "ใกล้หมด" : "ปกติ"}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                                <button
+                                                    onClick={() => openEditModal(product)}
+                                                    className="px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+                                                >
+                                                    แก้ไข
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(product.id)}
+                                                    className="px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    ลบ
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -161,66 +338,6 @@ export default function AdminProductsPage() {
                     isPending={createMutation.isPending || updateMutation.isPending}
                 />
             )}
-        </AdminLayout>
-    );
-}
-
-function ProductModal({ categories, product, onClose, onSubmit, isPending }: any) {
-    const { register, handleSubmit, formState: { errors } } = useForm({
-        defaultValues: product ? {
-            ...product,
-            costPrice: Number(product.costPrice),
-            sellPrice: Number(product.sellPrice)
-        } : {}
-    });
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="glass max-w-lg w-full rounded-3xl p-8 shadow-2xl border-white animate-in zoom-in-95 duration-200">
-                <h3 className="text-2xl font-black text-slate-800 mb-6">
-                    {product ? "แก้ไขข้อมูลสินค้า" : "เพิ่มสินค้าใหม่"}
-                </h3>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">ชื่อสินค้า</label>
-                            <input {...register("name", { required: "กรุณากรอกชื่อสินค้า" })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">บาร์โค้ด</label>
-                            <input {...register("barcode")} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" placeholder="ไม่ต้องกรอกหากไม่มี" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">ราคาทุน</label>
-                            <input type="number" step="0.01" {...register("costPrice", { required: true, valueAsNumber: true })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">ราคาขาย</label>
-                            <input type="number" step="0.01" {...register("sellPrice", { required: true, valueAsNumber: true })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">หมวดหมู่</label>
-                            <select {...register("categoryId", { required: true })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none bg-white">
-                                {categories.map((cat: any) => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">แจ้งเตือนสินค้าต่ำกว่า</label>
-                            <input type="number" {...register("lowStockThreshold", { valueAsNumber: true })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none" defaultValue={5} />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-6 space-x-4">
-                        <button type="button" onClick={onClose} className="px-6 py-3 font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase text-sm">ยกเลิก</button>
-                        <button type="submit" disabled={isPending} className="flex-1 gradient-primary text-white py-4 rounded-2xl font-black shadow-lg shadow-primary-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
-                            {isPending ? "กำลังส่งข้อมูล..." : (product ? "บันทึกการแก้ไข" : "เพิ่มสินค้าเข้าระบบ")}
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
     );
 }

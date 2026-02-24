@@ -27,6 +27,7 @@ export interface CreateProductDto {
     description?: string;
     costPrice: number;
     sellPrice: number;
+    stockQuantity?: number;
     categoryId: string;
     imageUrl?: string;
     lowStockThreshold?: number;

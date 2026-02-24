@@ -13,6 +13,29 @@ export class CategoriesService {
     });
   }
 
+  async createDefaultCategories() {
+    const defaultCategories = [
+      { name: 'อาหารและเครื่องดื่ม', description: 'สินค้าประเภทอาหารและเครื่องดื่ม' },
+      { name: 'ขนมและของว่าง', description: 'สินค้าประเภทขนมและของว่าง' },
+      { name: 'เครื่องใช้ในบ้าน', description: 'สินค้าประเภทเครื่องใช้ในบ้าน' },
+      { name: 'เครื่องเขียนและอุปกรณ์สำนักงาน', description: 'สินค้าประเภทเครื่องเขียนและอุปกรณ์สำนักงาน' },
+      { name: 'เสื้อผ้าและเครื่องแต่งกาย', description: 'สินค้าประเภทเสื้อผ้าและเครื่องแต่งกาย' },
+      { name: 'สุขภาพและความงาม', description: 'สินค้าประเภทสุขภาพและความงาม' },
+      { name: 'ของเล่นและสื่อบันเทิง', description: 'สินค้าประเภทของเล่นและสื่อบันเทิง' },
+      { name: 'อื่นๆ', description: 'สินค้าประเภทอื่นๆ' },
+    ];
+
+    for (const category of defaultCategories) {
+      await this.prisma.category.upsert({
+        where: { name: category.name },
+        update: category,
+        create: category,
+      });
+    }
+
+    return this.findAll();
+  }
+
   async findAll() {
     return this.prisma.category.findMany({
       include: {

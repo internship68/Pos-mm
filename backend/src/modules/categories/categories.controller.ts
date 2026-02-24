@@ -27,6 +27,12 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto);
   }
 
+  @Post('seed')
+  @Roles(Role.ADMIN)
+  createDefaultCategories() {
+    return this.categoriesService.createDefaultCategories();
+  }
+
   @Get()
   findAll() {
     return this.categoriesService.findAll();
