@@ -7,4 +7,4 @@ import { ExpensesController } from './expenses.controller';
   controllers: [ExpensesController],
   exports: [ExpensesService],
 })
-export class ExpensesModule { }
+export class ExpensesModule {}

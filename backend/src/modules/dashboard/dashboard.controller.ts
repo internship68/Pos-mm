@@ -8,11 +8,11 @@ import { Role } from '../../common/enums/role.enum';
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DashboardController {
-    constructor(private readonly dashboardService: DashboardService) { }
+  constructor(private readonly dashboardService: DashboardService) {}
 
-    @Get('summary')
-    @Roles(Role.ADMIN)
-    getSummary() {
-        return this.dashboardService.getSummary();
-    }
+  @Get('summary')
+  @Roles(Role.ADMIN)
+  getSummary() {
+    return this.dashboardService.getSummary();
+  }
 }

@@ -10,23 +10,23 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @Controller('sales')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SalesController {
-    constructor(private readonly salesService: SalesService) { }
+  constructor(private readonly salesService: SalesService) {}
 
-    @Post()
-    @Roles(Role.ADMIN, Role.CASHIER)
-    create(@CurrentUser() user: any, @Body() createSaleDto: CreateSaleDto) {
-        return this.salesService.create(user.userId, createSaleDto);
-    }
+  @Post()
+  @Roles(Role.ADMIN, Role.CASHIER)
+  create(@CurrentUser() user: any, @Body() createSaleDto: CreateSaleDto) {
+    return this.salesService.create(user.userId, createSaleDto);
+  }
 
-    @Get()
-    @Roles(Role.ADMIN, Role.CASHIER)
-    findAll() {
-        return this.salesService.findAll();
-    }
+  @Get()
+  @Roles(Role.ADMIN, Role.CASHIER)
+  findAll() {
+    return this.salesService.findAll();
+  }
 
-    @Get(':id')
-    @Roles(Role.ADMIN, Role.CASHIER)
-    findOne(@Param('id') id: string) {
-        return this.salesService.findOne(id);
-    }
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.CASHIER)
+  findOne(@Param('id') id: string) {
+    return this.salesService.findOne(id);
+  }
 }

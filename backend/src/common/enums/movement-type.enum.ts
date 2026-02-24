@@ -1,5 +1,5 @@
 export enum MovementType {
-    IN = 'IN',
-    OUT = 'OUT',
-    ADJUST = 'ADJUST',
+  IN = 'IN',
+  OUT = 'OUT',
+  ADJUST = 'ADJUST',
 }
