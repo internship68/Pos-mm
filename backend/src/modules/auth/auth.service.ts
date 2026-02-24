@@ -23,8 +23,12 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    
+    // Remove confirmPassword before creating user
+    const { confirmPassword, ...userData } = registerDto;
+    
     const user = await this.usersService.create({
-      ...registerDto,
+      ...userData,
       password: hashedPassword,
     });
 

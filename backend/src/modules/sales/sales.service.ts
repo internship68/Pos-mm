@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { MovementType } from '../../common/enums/movement-type.enum';
 
@@ -54,7 +55,7 @@ export class SalesService {
     // 2. Perform Transaction
     return this.prisma.$transaction(async (tx) => {
       // a. Create Sale
-      const sale = await tx.sale.create({
+      const sale = await (tx as any).sale.create({
         data: {
           totalAmount,
           paymentMethod,
@@ -78,7 +79,7 @@ export class SalesService {
 
       // b. Update Stock and Create Stock Movement for each item
       for (const item of items) {
-        await tx.product.update({
+        await (tx as any).product.update({
           where: { id: item.productId },
           data: {
             stockQuantity: {
@@ -87,7 +88,7 @@ export class SalesService {
           },
         });
 
-        await tx.stockMovement.create({
+        await (tx as any).stockMovement.create({
           data: {
             productId: item.productId,
             type: MovementType.OUT,

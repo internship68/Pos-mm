@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { UpdateStockDto } from './dto/update-stock.dto';
 import { MovementType } from '../../common/enums/movement-type.enum';
 
@@ -33,12 +34,12 @@ export class InventoryService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const updatedProduct = await tx.product.update({
+      const updatedProduct = await (tx as any).product.update({
         where: { id: productId },
         data: { stockQuantity: newQuantity },
       });
 
-      const movement = await tx.stockMovement.create({
+      const movement = await (tx as any).stockMovement.create({
         data: {
           productId,
           type,

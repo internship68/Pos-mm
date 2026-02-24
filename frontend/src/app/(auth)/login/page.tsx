@@ -7,12 +7,21 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LoginDto } from "@/types/dtos";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
     const router = useRouter();
     const setAuth = useAuthStore((state) => state.setAuth);
+    const { isAuthenticated } = useAuthStore();
     const [error, setError] = useState<string | null>(null);
+
+    // Check if already authenticated and redirect
+    useEffect(() => {
+        if (isAuthenticated) {
+            console.log('🔄 Already authenticated, redirecting...');
+            router.push('/admin'); // or check user role
+        }
+    }, [isAuthenticated, router]);
 
     const {
         register,
@@ -23,20 +32,27 @@ export default function LoginPage() {
     const mutation = useMutation({
         mutationFn: authService.login,
         onSuccess: (data) => {
+            console.log('✅ Login Success - Response:', data);
+            console.log('✅ User role:', data.user.role);
             setAuth(data.user, data.access_token);
             if (data.user.role === "ADMIN") {
+                console.log('🔄 Redirecting to /admin');
                 router.push("/admin");
             } else {
+                console.log('🔄 Redirecting to /cashier');
                 router.push("/cashier");
             }
         },
         onError: (err: any) => {
+            console.error('❌ Login Error:', err);
             setError(err.response?.data?.message || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่");
         },
     });
 
     const onSubmit = (data: LoginDto) => {
+        if (isSubmitting) return; // Prevent multiple submissions
         setError(null);
+        console.log('🚀 Submitting login form...');
         mutation.mutate(data);
     };
 
