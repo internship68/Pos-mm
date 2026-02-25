@@ -45,7 +45,7 @@ export default function AdminInventoryPage() {
     const lowStockProducts = products?.filter((p) => p.stockQuantity <= p.lowStockThreshold) ?? [];
 
     return (
-        <div className="min-h-screen bg-[#F7F7F5] px-8 py-10">
+        <div className="h-full bg-[#F7F7F5] px-8 py-10">
 
             {/* ===================== HEADER ===================== */}
             <div className="flex justify-between items-end mb-10">
