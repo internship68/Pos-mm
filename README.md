@@ -1,98 +1,78 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 📊 POS-MM : ระบบจัดการร้านค้าและจุดขายครบวงจร (POS & Store Management System)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+ยินดีต้อนรับสู่ **POS-MM** โปรเจกต์ระบบบริหารจัดการร้านค้าและระบบขายหน้าร้าน (Point of Sale) ที่ถูกออกแบบมาเพื่อยกระดับการจัดการธุรกิจให้เป็นเรื่องง่าย รวดเร็ว และเป็นระบบมากยิ่งขึ้น 
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+ระบบนี้มุ่งเน้นการใช้งานที่คล่องตัว รองรับการทำงานผ่านระบบ Cloud ทำให้สามารถตรวจสอบยอดขายและจัดการสินค้าคงคลังได้แบบ Real-time จากทุกที่ทุกเวลา
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🎯 ระบบนี้เหมาะกับใคร?
+POS-MM ถูกออกแบบมาให้มีความยืดหยุ่นสูง จึงเหมาะกับธุรกิจหลากหลายประเภท โดยเฉพาะ:
+- 🏪 **ร้านสะดวกซื้อ / มินิมาร์ท** ที่มีรายการสินค้าหลากหลายและการเข้าออกของสต๊อกเป็นประจำ
+- ☕ **ร้านกาแฟ / คาเฟ่** ที่ต้องการความรวดเร็วในการคิดเงินและรับชำระผ่าน QR Code/เงินโอน
+- 🛍️ **ร้านขายปลีก-ส่ง / ร้านขายของชำ** ที่ต้องการติดตามกำไร-ต้นทุนของสินค้าแต่ละรายการ
+- 👕 **ร้านขายเสื้อผ้า / สินค้าแฟชั่น** ที่ต้องการแบ่งหมวดหมู่สินค้าอย่างชัดเจน
+- 💼 **ธุรกิจ SME ทั่วไป** ที่ต้องการเปลี่ยนจากจดบันทึกลงสมุดหรือ Excel มาใช้ระบบดิจิทัลแบบเต็มรูปแบบ
 
-## Project setup
+---
 
-```bash
-$ npm install
-```
+## ✨ ฟีเจอร์เด่น (Key Features)
 
-## Compile and run the project
+### 1. ระบบจัดการขายหน้าร้าน (Point of Sale - POS)
+- หน้าจอแคชเชียร์ที่ออกแบบมาให้ใช้งานง่าย รวดเร็ว และรองรับเครื่องอ่านบาร์โค้ด
+- รองรับการรับชำระเงินหลายรูปแบบ (เงินสด, โอนเงินผ่านธนาคาร พร้อมบันทึกสลิป)
+- ระบบจัดการตะกร้าสินค้า ดูสรุปยอดรวม และคำนวณเงินทอนอัตโนมัติ
 
-```bash
-# development
-$ npm run start
+### 2. ระบบบริหารจัดการสินค้า (Product & Inventory Management)
+- เพิ่ม แก้ไข และลบรายการสินค้า พร้อมอัปโหลดรูปภาพ
+- แบ่งหมวดหมู่สินค้าเพิ่มความเป็นระเบียบและค้นหาง่าย
+- **ระบบติดตามสต๊อกอัจฉริยะ:** ตัดสต๊อกอัตโนมัติเมื่อมีการขาย และแสดงสถานะ "สินค้าใกล้หมด (Low Stock)" 
 
-# watch mode
-$ npm run start:dev
+### 3. ระบบจัดการประวัติและยอดขาย (Sales & Receipts)
+- บันทึกทุกบิลการขายพร้อมรายละเอียดสินค้าในบิล แผลงยอดรวมและกำไรที่ได้
+- ค้นหาและดูประวัติการขายย้อนหลัง
+- ฟอร์แมตใบเสร็จรับเงิน (Receipts) 
 
-# production mode
-$ npm run start:prod
-```
+### 4. ระบบบัญชีรายจ่าย (Expense Management)
+- บันทึกค่าใช้จ่ายต่างๆ ในร้าน เช่น ค่าเช่าที่ ค่าไฟ ค่าน้ำ ค่าใช้จ่ายเบ็ดเตล็ด เพื่อนำไปหักลบกับรายรับและหา "กำไรสุทธิ" ที่แท้จริง
 
-## Run tests
+### 5. แดชบอร์ดและรายงาน (Dashboard & Reports)
+- สรุปภาพรวมของร้านค้าในหน้าเดียว (ภาพรวมรายได้ประจำวัน/เดือน, สินค้าขายดี, จำนวนบิล)
+- ช่วยให้เจ้าของธุรกิจสามารถวิเคราะห์แนวโน้มและตัดสินใจทางธุรกิจได้แม่นยำขึ้น
 
-```bash
-# unit tests
-$ npm run test
+### 6. ระบบจัดการสิทธิ์ผู้ใช้งาน (Role-based Access Control)
+- **Admin (เจ้าของร้าน):** มีสิทธิ์เข้าถึงทุกฟังก์ชัน จัดการระบบหลังบ้าน รายงาน และตั้งค่าสต๊อก
+- **Cashier (พนักงานขาย):** เข้าถึงได้เฉพาะหน้าขายสินค้า (POS) เพื่อป้องกันความผิดพลาดและรักษาความปลอดภัยของข้อมูล
 
-# e2e tests
-$ npm run test:e2e
+---
 
-# test coverage
-$ npm run test:cov
-```
+## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
 
-## Deployment
+โปรเจกต์นี้พัฒนาด้วยเทคโนโลยีที่ทันสมัยและมีประสิทธิภาพระดับ Enterprise-grade:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+**Frontend (ระบบหน้าบ้าน):**
+- **Next.js (React Framework):** สำหรับสร้างหน้าเว็บที่โหลดไวและรองรับ SEO
+- **TypeScript:** เพื่อความเสถียรของโค้ดและป้องกันข้อผิดพลาด
+- **Tailwind CSS:** สำหรับการออกแบบ UI ที่สวยงาม ทันสมัย และเป็นแบบ Responsive
+- **React Query:** สำหรับการจัดการ State และแคชข้อมูล API เพื่อความลื่นไหลระดับสากล
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+**Backend (ระบบหลังบ้าน):**
+- **NestJS (Node.js):** เฟรมเวิร์กสถาปัตยกรรมระดับองค์กร แข็งแกร่งและปลอดภัย
+- **Prisma (ORM):** สำหรับจัดการและสื่อสารกับฐานข้อมูล
+- **PostgreSQL (via Supabase):** ฐานข้อมูลที่มีความเสถียรและปลอดภัยสูงบน Cloud
+- **JWT (JSON Web Token):** สำหรับระบบ Authentication ล็อกอินและรักษาความปลอดภัย
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+---
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🚀 ประสบการณ์ของผู้ใช้งาน (UX/UI Design)
+ระบบถูกออกแบบโดยยึดหลัก **Modern & Glassmorphism Design** ให้ความรู้สึกที่พรีเมียม สบายตา ด้วยการใช้การแรเงา (Gradients) และภาพเบลอแนวโปร่งแสง (Backdrop blur) พร้อมแอนิเมชันขนาดเล็ก (Micro-animations) ทำให้ผู้ใช้รู้สึกเป็นมิตรและไม่ซับซ้อนแม้จะไม่เคยใช้ระบบ POS มาก่อน
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🌐 การแสดงผลและช่องทางการติดต่อ
+สำหรับลูกค้าหรือผู้ที่สนใจสามารถทดลองใช้งานระบบหรือดูโครงสร้างของโปรเจกต์ได้ 
+- **Frontend Deployment:** [Vercel] 
+- **Backend Deployment:** [Render] 
+- **Database:** Supabase 
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+*(สามารถสร้างผู้ใช้อย่างง่ายเพื่อทดลองล็อกอินเป็นบทบาท Admin และ Cashier เพื่อทดสอบประสบการณ์ของระบบได้ทันที)*
